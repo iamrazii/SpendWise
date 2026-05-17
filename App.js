@@ -15,6 +15,7 @@ import RegisterScreen from './screens/RegisterScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import AddExpenseScreen from './screens/AddExpenseScreen';
 import HistoryScreen from './screens/HistoryScreen';
+import SettingsScreen from './screens/SettingsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -33,6 +34,7 @@ function MainTabs() {
           } else if (route.name === 'History') {
             iconName = focused ? 'list' : 'list-outline';
           }
+          else if (route.name === 'Settings') iconName = focused ? 'settings' : 'settings-outline';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#0d6efd',
@@ -43,6 +45,7 @@ function MainTabs() {
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Add Expense" component={AddExpenseScreen} />
       <Tab.Screen name="History" component={HistoryScreen} options={{ title: 'Transactions' }} />
+      <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
 }

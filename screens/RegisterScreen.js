@@ -1,7 +1,7 @@
 // screens/RegisterScreen.js
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword,updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 
@@ -19,11 +19,12 @@ export default function RegisterScreen({ navigation }) {
 
     setLoading(true);
     try {
-      // 1. Create user in Firebase Auth
+      //  Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      await updateProfile(user, { displayName: name });
 
-      // 2. Create a user profile document in Firestore
+      // Create a user profile document in Firestore
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
         name: name,

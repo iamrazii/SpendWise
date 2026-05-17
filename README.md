@@ -1,4 +1,4 @@
-content = """# SpendWise 💸
+# SpendWise 💸
 
 A fully functional, cross-platform mobile expense tracker built with **React Native (Expo)** and **Firebase**. This project was developed to master core concepts like declarative UI, complex navigation, real-time cloud synchronization, and local device storage.
 

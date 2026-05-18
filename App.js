@@ -1,15 +1,17 @@
 // App.js
 import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { onAuthStateChanged } from 'firebase/auth';
 import { Ionicons } from '@expo/vector-icons';
 import { auth } from './firebaseConfig';
+
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { ExpenseProvider } from './context/ExpenseContext';
 
-// Import our dedicated screens
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import DashboardScreen from './screens/DashboardScreen';
@@ -20,26 +22,33 @@ import SettingsScreen from './screens/SettingsScreen';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// 1. Define the Bottom Tabs Layout
 function MainTabs() {
+  const { theme, isDarkMode } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
-          if (route.name === 'Dashboard') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Add Expense') {
-            iconName = focused ? 'add-circle' : 'add-circle-outline';
-          } else if (route.name === 'History') {
-            iconName = focused ? 'list' : 'list-outline';
-          }
+          if (route.name === 'Dashboard') iconName = focused ? 'home' : 'home-outline';
+          else if (route.name === 'Add Expense') iconName = focused ? 'add-circle' : 'add-circle-outline';
+          else if (route.name === 'History') iconName = focused ? 'list' : 'list-outline';
           else if (route.name === 'Settings') iconName = focused ? 'settings' : 'settings-outline';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#0d6efd',
-        tabBarInactiveTintColor: 'gray',
-        headerShown: true, // Shows the native top title bar for each tab
+        tabBarInactiveTintColor: isDarkMode ? '#888' : 'gray',
+        headerShown: true,
+        tabBarStyle: {
+          backgroundColor: theme.tabBar,
+          borderTopColor: theme.border,
+        },
+        headerStyle: {
+          backgroundColor: theme.card,
+          shadowColor: 'transparent',
+          elevation: 0,
+        },
+        headerTintColor: theme.textMain,
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
@@ -50,7 +59,27 @@ function MainTabs() {
   );
 }
 
-// 2. Main Root Navigator
+function RootNavigator({ user }) {
+  const { isDarkMode } = useTheme();
+
+  return (
+    <ExpenseProvider> 
+      <NavigationContainer theme={isDarkMode ? DarkTheme : DefaultTheme}>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {user ? (
+            <Stack.Screen name="Main" component={MainTabs} />
+          ) : (
+            <>
+              <Stack.Screen name="Login" component={LoginScreen} />
+              <Stack.Screen name="Register" component={RegisterScreen} />
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ExpenseProvider>
+  );
+}
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -72,22 +101,8 @@ export default function App() {
   }
 
   return (
-    // Wrap the whole app in our Provider so all screens can access the database
-    <ExpenseProvider> 
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          {user ? (
-            // User is signed in -> Show Bottom Tabs
-            <Stack.Screen name="Main" component={MainTabs} />
-          ) : (
-            // No user -> Show Authentication Flow
-            <>
-              <Stack.Screen name="Login" component={LoginScreen} />
-              <Stack.Screen name="Register" component={RegisterScreen} />
-            </>
-          )}
-        </Stack.Navigator>
-      </NavigationContainer>
-    </ExpenseProvider>
+    <ThemeProvider>
+      <RootNavigator user={user} />
+    </ThemeProvider>
   );
 }

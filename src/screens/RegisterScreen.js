@@ -1,39 +1,23 @@
-// screens/RegisterScreen.js
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { createUserWithEmailAndPassword,updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../firebaseConfig';
+import { useAuth } from '../context/AuthContext';
 
 export default function RegisterScreen({ navigation }) {
-  const [name, setName] = useState('');
+  const { register } = useAuth();
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!name || !email || !password) {
+    if (!username.trim() || !email.trim() || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     setLoading(true);
     try {
-      //  Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      await updateProfile(user, { displayName: name });
-
-      // Create a user profile document in Firestore
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        name: name,
-        email: email,
-        createdAt: new Date(),
-        defaultCurrency: 'USD'
-      });
-
-      // Navigation is handled automatically by our auth listener (setup in Step 5)
+      await register(username.trim(), email.trim(), password);
     } catch (error) {
       Alert.alert('Registration Failed', error.message);
     } finally {
@@ -47,9 +31,9 @@ export default function RegisterScreen({ navigation }) {
       
       <TextInput
         style={styles.input}
-        placeholder="Full Name"
-        value={name}
-        onChangeText={setName}
+        placeholder="Username"
+        value={username}
+        onChangeText={setUsername}
       />
       <TextInput
         style={styles.input}

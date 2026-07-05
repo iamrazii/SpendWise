@@ -40,3 +40,9 @@ yarn-error.*
 /ios
 /android
 /.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+backend/.env
+.vscode/

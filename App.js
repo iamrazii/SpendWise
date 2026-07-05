@@ -1,32 +1,28 @@
-// App.js
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, ActivityIndicator } from 'react-native';
 
-import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { onAuthStateChanged } from 'firebase/auth';
 import { Ionicons } from '@expo/vector-icons';
-import { auth } from './firebaseConfig';
 
-import { ThemeProvider, useTheme } from './context/ThemeContext';
-import { ExpenseProvider } from './context/ExpenseContext';
+import { useAuth, AuthProvider } from './src/context/AuthContext';
+import { ExpenseProvider } from './src/context/ExpenseContext';
 
-import LoginScreen from './screens/LoginScreen';
-import RegisterScreen from './screens/RegisterScreen';
-import DashboardScreen from './screens/DashboardScreen';
-import AddExpenseScreen from './screens/AddExpenseScreen';
-import HistoryScreen from './screens/HistoryScreen';
-import SettingsScreen from './screens/SettingsScreen';
+import LoginScreen from './src/screens/LoginScreen';
+import RegisterScreen from './src/screens/RegisterScreen';
+import DashboardScreen from './src/screens/DashboardScreen';
+import AddExpenseScreen from './src/screens/AddExpenseScreen';
+import HistoryScreen from './src/screens/HistoryScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function MainTabs() {
-  const { theme, isDarkMode } = useTheme();
-
   return (
     <Tab.Navigator
+      detachInactiveScreens={false}
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
@@ -37,18 +33,18 @@ function MainTabs() {
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#0d6efd',
-        tabBarInactiveTintColor: isDarkMode ? '#888' : 'gray',
+        tabBarInactiveTintColor: 'gray',
         headerShown: true,
         tabBarStyle: {
-          backgroundColor: theme.tabBar,
-          borderTopColor: theme.border,
+          backgroundColor: '#ffffff',
+          borderTopColor: '#dee2e6',
         },
         headerStyle: {
-          backgroundColor: theme.card,
+          backgroundColor: '#ffffff',
           shadowColor: 'transparent',
           elevation: 0,
         },
-        headerTintColor: theme.textMain,
+        headerTintColor: '#212529',
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
@@ -59,12 +55,22 @@ function MainTabs() {
   );
 }
 
-function RootNavigator({ user }) {
-  const { isDarkMode } = useTheme();
+function RootNavigator() {
+  // Read stateless login states directly out of the unified MVVM Auth ViewModel
+  const { user, authLoading } = useAuth();
+
+  // Render initialization loading screen while checking AsyncStorage for a saved JWT
+  if (authLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8f9fa' }}>
+        <ActivityIndicator size="large" color="#0d6efd" />
+      </View>
+    );
+  }
 
   return (
     <ExpenseProvider> 
-      <NavigationContainer theme={isDarkMode ? DarkTheme : DefaultTheme}>
+      <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           {user ? (
             <Stack.Screen name="Main" component={MainTabs} />
@@ -81,28 +87,9 @@ function RootNavigator({ user }) {
 }
 
 export default function App() {
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (authenticatedUser) => {
-      setUser(authenticatedUser);
-      setIsLoading(false);
-    });
-    return unsubscribe;
-  }, []);
-
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#0d6efd" />
-      </View>
-    );
-  }
-
   return (
-    <ThemeProvider>
-      <RootNavigator user={user} />
-    </ThemeProvider>
+    <AuthProvider>
+      <RootNavigator />
+    </AuthProvider>
   );
 }

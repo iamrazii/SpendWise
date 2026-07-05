@@ -1,67 +1,99 @@
 // context/ExpenseContext.js
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db, auth } from '../firebaseConfig';
+
+import { useAuth } from './AuthContext';
+import { getAuthHeaders, API_URL } from '../services/api';
+
 
 const ExpenseContext = createContext({});
 
 export const ExpenseProvider = ({ children }) => {
+  const {user} = useAuth();
   const [expenses, setExpenses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
+  const [summary, setSummary] = useState({ current_month_spending: 0, monthly_limit: null, limit_exceeded: false });
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const user = auth.currentUser;
-    if (!user) {
-      setExpenses([]);
-      setLoading(false);
-      return;
-    }
 
-    // Query Firestore strictly for the logged-in user's data
-    const q = query(
-      collection(db, 'expenses'),
-      where('uid', '==', user.uid)
-    );
-
-    // onSnapshot sets up a live, real-time listener
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const expenseData = [];
-      querySnapshot.forEach((document) => {
-        expenseData.push({ id: document.id, ...document.data() });
-      });
-
-      // Sort client-side by date to avoid complex Firestore composite index setups
-      expenseData.sort((a, b) => b.date.toMillis() - a.date.toMillis());
+const fetchExpensesAndSummary = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const headers = await getAuthHeaders();
       
-      setExpenses(expenseData);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching expenses:", error);
-      setLoading(false);
-    });
+      const [expRes, sumRes,catRes] = await Promise.all([
+        fetch(`${API_URL}/expenses/`, { headers }),
+        fetch(`${API_URL}/expenses/summary`, { headers }),
+        fetch(`${API_URL}/categories/`, { headers })
+      ]);
 
-    return () => unsubscribe(); // Cleanup listener on auth change or unmount
-  }, [auth.currentUser]);
+      if (!expRes.ok) console.error("Expenses API failed:", await expRes.text());
+    if (!sumRes.ok) console.error("Summary API failed:", await sumRes.text());
+    if (!catRes.ok) console.error("Category API failed:", await sumRes.text());
+      if (expRes.ok && sumRes.ok && catRes.ok) {
+        const expData = await expRes.json();
+        const sumData = await sumRes.json();
+        const catData = await catRes.json();
+        const mappedExpenses = expData.map(item => ({
+          ...item,
+          title: item.description || 'Untitled Transaction',
+          date: item.date_added, // Map database timestamp to date field
+        }));
+
+        setExpenses(mappedExpenses);
+        setSummary(sumData);
+        setCategories(catData)
+      }
+    } catch (error) {
+      console.error('Failed to sync transaction ledger:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Automatically refresh records whenever a user logs in
+  useEffect(() => {
+    fetchExpensesAndSummary();
+  }, [user]);
+
+
 
   // Global action to add an expense
-  const addExpense = async (expenseItem) => {
-    const user = auth.currentUser;
-    if (!user) return;
-    
-    await addDoc(collection(db, 'expenses'), {
-      ...expenseItem,
-      uid: user.uid,
-      createdAt: new Date()
-    });
+  const addExpense = async (expensePayload) => {
+    const headers = await getAuthHeaders()
+    const payload = {
+      amount: expensePayload.amount,
+      description: expensePayload.title, 
+      category_id: expensePayload.category_id || null 
+    };
+
+    const res = await fetch(`${API_URL}/expenses/`,{
+      headers,
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || 'Failed to persist transaction record');
+    }
+
+    await fetchExpensesAndSummary(); // Trigger atomic state refresh
   };
 
   // Global action to delete an expense
-  const deleteExpense = async (id) => {
-    await deleteDoc(doc(db, 'expenses', id));
-  };
+  const deleteExpense = async (expenseId) => {
+    const res = await fetch(`${API_BASE_URL}/expenses/${expenseId}`, {
+      method: 'DELETE',
+      headers: await getAuthHeaders()
+    });
 
-  return (
-    <ExpenseContext.Provider value={{ expenses, loading, addExpense, deleteExpense }}>
+    if (!res.ok) throw new Error('Failed to purge transaction item');
+    await fetchExpensesAndSummary();
+    };
+
+    return (
+    <ExpenseContext.Provider value={{ expenses, summary, loading, addExpense, deleteExpense, refreshData: fetchExpensesAndSummary , categories}}>
       {children}
     </ExpenseContext.Provider>
   );

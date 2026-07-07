@@ -15,6 +15,7 @@ import DashboardScreen from './src/screens/DashboardScreen';
 import AddExpenseScreen from './src/screens/AddExpenseScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import InsightsScreen from './src/screens/InsightsScreen'
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -71,16 +72,32 @@ function RootNavigator() {
   return (
     <ExpenseProvider> 
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          {user ? (
-            <Stack.Screen name="Main" component={MainTabs} />
-          ) : (
-            <>
-              <Stack.Screen name="Login" component={LoginScreen} />
-              <Stack.Screen name="Register" component={RegisterScreen} />
-            </>
-          )}
-        </Stack.Navigator>
+        <Stack.Navigator>
+      {user ? (
+        <>
+          {/* Your main tab layout remains primary */}
+          <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
+          
+          {/* NEW: Register the Insights screen on the native stack layout */}
+          <Stack.Screen 
+            name="Insights" 
+            component={InsightsScreen} 
+            options={{ 
+              title: 'Smart Insights',
+              headerBackTitle: 'Dashboard', // Native back button label fallback
+              headerStyle: { backgroundColor: '#fff' },
+              headerTintColor: '#212529',
+              headerTitleStyle: { fontWeight: 'bold' },
+            }} 
+          />
+        </>
+      ) : (
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
+        </>
+      )}
+    </Stack.Navigator>
       </NavigationContainer>
     </ExpenseProvider>
   );

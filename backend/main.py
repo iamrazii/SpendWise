@@ -9,6 +9,7 @@ from app.routers import (
     user_routes,
     categories_route,
     expenses_route,
+    insight_route
 )
 
 
@@ -76,6 +77,7 @@ app.add_middleware(
 app.include_router(user_routes.router)
 app.include_router(categories_route.router)
 app.include_router(expenses_route.router)
+app.include_router(insight_route.router)
 
 
 @app.get("/")

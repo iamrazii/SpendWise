@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useExpenses } from '../context/ExpenseContext';
@@ -34,6 +34,21 @@ export default function DashboardScreen({ navigation }) {
   const monthlyLimit = parseFloat(summary.monthly_limit) || 50000; // Fallback to baseline default
   const budgetPercentage = Math.min((totalSpentThisMonth / monthlyLimit) * 100, 100);
   const recentTransactions = expenses.slice(0, 4);
+
+
+  useEffect(() => {
+    // Inject the header action navigation link button dynamically
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity 
+          onPress={() => navigation.navigate('Insights')} 
+          style={{ marginRight: 16 }}
+        >
+          <Ionicons name="bulb-outline" size={24} color="#0d6efd" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   if (loading) {
     return (

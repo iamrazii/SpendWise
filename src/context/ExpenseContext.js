@@ -67,7 +67,6 @@ const fetchExpensesAndSummary = async () => {
       category_id: expensePayload.category_id || null 
     };
 
-    console.log(expensePayload.title)
     const res = await fetch(`${API_URL}/expenses/`,{
       headers,
       method: 'POST',
@@ -84,7 +83,7 @@ const fetchExpensesAndSummary = async () => {
 
   // Global action to delete an expense
   const deleteExpense = async (expenseId) => {
-    const res = await fetch(`${API_BASE_URL}/expenses/${expenseId}`, {
+    const res = await fetch(`${API_URL}/expenses/${expenseId}`, {
       method: 'DELETE',
       headers: await getAuthHeaders()
     });

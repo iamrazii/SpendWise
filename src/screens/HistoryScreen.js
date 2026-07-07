@@ -26,7 +26,7 @@ export default function HistoryScreen() {
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   const filteredExpenses = useMemo(() => {
-    console.log(expenses)
+
     return expenses.filter(item => {
       const categoryName = item.category?.name || 'Other';
       const matchesCategory = selectedCategory === 'All' || categoryName === selectedCategory;

@@ -9,21 +9,17 @@ class AnalyticsEngine:
     def generate_insights(user_id: int, db) -> dict:
         now = datetime.utcnow()
         current_day = now.day
-        # Find total days in the current calendar month
         total_days = calendar.monthrange(now.year, now.month)[1]
         
-        # 1. Fetch User Limit
         user = db.query(User).filter(User.id == user_id).first()
         monthly_limit = user.monthly_limit or Decimal("0.00")
         
-        # 2. Calculate Current Month Spending
         start_of_month = datetime(now.year, now.month, 1)
         current_spent = db.query(func.sum(Expense.amount)).filter(
             Expense.user_id == user_id,
             Expense.date_added >= start_of_month
         ).scalar() or Decimal("0.00")
         
-        # 3. Calculate Velocity & Projections
         velocity_per_day = current_spent / Decimal(current_day)
         projected_month_end = velocity_per_day * Decimal(total_days)
         
@@ -34,11 +30,9 @@ class AnalyticsEngine:
             is_overshooting = True
             overshoot_percentage = ((projected_month_end - monthly_limit) / monthly_limit) * 100
 
-        # 4. Anomaly Detection (Current Week vs Past Baseline)
         start_of_week = now - timedelta(days=now.weekday())
         anomalies = []
         
-        # Fetch spending grouped by category for the current week
         weekly_spending = db.query(
             Category.name, 
             func.sum(Expense.amount).label("total")
@@ -48,14 +42,11 @@ class AnalyticsEngine:
         ).group_by(Category.name).all()
         
         for item in weekly_spending:
-            # Simple Baseline: Check historical average before this week
             hist_avg = db.query(func.sum(Expense.amount)).filter(
                 Expense.user_id == user_id,
                 Expense.date_added < start_of_week
             ).scalar()
             
-            # For demonstration, let's say a baseline threshold is crossed if 
-            # current week spending exceeds a typical historical window milestone
             historical_baseline = Decimal("1500.00") # Replace with dynamic average calculation if tracking historic weeks
             
             if item.total > (historical_baseline * Decimal("1.4")):

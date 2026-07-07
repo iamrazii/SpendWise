@@ -63,7 +63,7 @@ export default function InsightsScreen({ navigation }) {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0d6efd']} />}
     >
       
-      {/* 1. DYNAMIC STATUS CALLOUT BANNER */}
+      {/*  DYNAMIC STATUS CALLOUT BANNER */}
       <View style={[styles.statusBanner, data.is_overshooting ? styles.bannerDanger : styles.bannerSafe]}>
         <View style={styles.bannerHeader}>
           <Ionicons 
@@ -83,7 +83,7 @@ export default function InsightsScreen({ navigation }) {
         </Text>
       </View>
 
-      {/* 2. FORECAST METRICS GRID */}
+      {/*  FORECAST METRICS GRID */}
       <Text style={styles.sectionTitle}>Month-End Projections</Text>
       <View style={styles.grid}>
         <View style={styles.metricCard}>
@@ -101,7 +101,7 @@ export default function InsightsScreen({ navigation }) {
         </View>
       </View>
 
-      {/* 3. STRUCTURAL PROGRESS INDICATOR BAR */}
+      {/*  STRUCTURAL PROGRESS INDICATOR BAR */}
       <View style={styles.progressSection}>
         <View style={styles.progressLabels}>
           <Text style={styles.progressLabelText}>Current: Rs. {parseFloat(data.current_month_spending).toLocaleString()}</Text>
@@ -116,7 +116,7 @@ export default function InsightsScreen({ navigation }) {
         <Text style={styles.progressHelpText}>Amber expansion line projects trend velocity behavior through month end.</Text>
       </View>
 
-      {/* 4. ANOMALY DETECTION ALERTS */}
+      {/*  ANOMALY DETECTION ALERTS */}
       <Text style={styles.sectionTitle}>Unusual Spending Spikes</Text>
       {!data.anomalies || data.anomalies.length === 0 ? (
         <View style={styles.emptyCard}>
@@ -143,7 +143,7 @@ export default function InsightsScreen({ navigation }) {
         ))
       )}
 
-      {/* 5. MANUAL EXPLICIT BACK NAVIGATION TRIGGER CONTROL LINK */}
+      {/*  MANUAL EXPLICIT BACK NAVIGATION TRIGGER CONTROL LINK */}
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Text style={styles.backButtonText}>Return to Dashboard</Text>
       </TouchableOpacity>

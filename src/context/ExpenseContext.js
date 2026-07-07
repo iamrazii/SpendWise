@@ -63,10 +63,11 @@ const fetchExpensesAndSummary = async () => {
     const headers = await getAuthHeaders()
     const payload = {
       amount: expensePayload.amount,
-      description: expensePayload.title, 
+      description: expensePayload.description, 
       category_id: expensePayload.category_id || null 
     };
 
+    console.log(expensePayload.title)
     const res = await fetch(`${API_URL}/expenses/`,{
       headers,
       method: 'POST',
